@@ -9,8 +9,15 @@ from scipy.integrate import quad, dblquad
 class CopulaTypes(Enum):
     """ Available copula families. """
 
-    GUMBEL = 2
-    INDEPENDENCE = 3
+    CLAYTON = 1
+    AMH = 3
+    GUMBEL = 4
+    FRANK = 5
+    JOE = 6
+    NELSEN_9 = 9
+    NELSEN_18 = 18
+    NELSEN_22 = 22
+
 
 class Bivariate(object):
     """
@@ -50,6 +57,18 @@ class Bivariate(object):
         self.random_seed = random_seed
         self.theta = theta
         self.n_sample = n_sample
+
+    def chech_theta(self):
+        """
+            Validate the theta inserted
+            Raises :
+                ValueError : If thete is not in :attr:`theta_interval` or is in :attr:`invalid_thetas`,
+
+        """
+        lower, upper = self.theta_interval
+        if (not lower <= self.theta <= upper) or (self.theta in self.invalid_thetas):
+            message = 'The inserted theta value {} is out of limits for the given {} copula.'
+            raise ValueError(message.format(self.theta, self.copula_type.name))
 
     def min(a, b):
       
@@ -164,7 +183,7 @@ class Archimedean(Bivariate):
     def _dotC2(self,u,v):
         """Return the value of the first partial derivative taken on (u,v)
         .. math:: C(u,v) = \phi'(v) / \phi'(C(u,v)), \quad 0<u,v<1
-        """ 
+        """
         value_1 = self._generator_dot(v) 
         value_2 = self._generator_dot(self._C(u,v))
         return value_1 / value_2
@@ -196,11 +215,11 @@ class Archimedean(Bivariate):
         for i in range(0,self.n_sample):
             v = X[i]
             def func(x):
-                value_ = np.abs(self._generator_dot(x) - v[1])
+                value_ = np.abs(( x - self._generator(x) / self._generator_dot(x)) - v[1])
                 return(value_)
             sol = minimize_scalar(func, bounds = (0,1), method = "bounded")
             sol = float(sol.x)
-            u = [np.exp(np.power(v[0],1/self.theta)*np.log(sol)) , np.exp(np.power(1-v[0],1/self.theta)*np.log(sol))]
+            u = [self._generator_inv(v[0] * self._generator(sol)) , self._generator_inv((1-v[0])*self._generator(sol))]
             output[i,:] = u
         return output
 
