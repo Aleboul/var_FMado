@@ -25,6 +25,7 @@ class CopulaTypes(Enum):
     NELSEN_9 = 9
     NELSEN_18 = 18
     NELSEN_22 = 22
+    HUSSLER_REISS = 23
 
 class Bivariate(object):
     """
@@ -162,7 +163,7 @@ class Archimedean(Bivariate):
         Attributes
         ----------
             sample_uni (np.array[float]) : sample where the margins are uniform on [0,1]
-            semple (np.array[float]) : sample where the uniform margins where inverted by
+            sample (np.array[float]) : sample where the uniform margins where inverted by
                                         a generalized inverse of a quantile function.
     """
 
@@ -207,7 +208,7 @@ class Archimedean(Bivariate):
 
     def sample_unimargin(self):
         """
-            Draws a bivariate sample following gumbel model
+            Draws a bivariate sample from archimedean copula
             Margins are uniform
         """
         output = np.zeros((self.n_sample,2))
@@ -234,3 +235,88 @@ class Archimedean(Bivariate):
             output[:,i] = norm.ppf(intput[:,i])
 
         return (output)
+
+class Extreme(Bivariate):
+    """
+        Base class for extreme value copulas.
+        This class allows to use methods which use the Pickans dependence function.
+        
+        Inputs
+        ------
+
+        Attributes
+        ----------
+            sample_uni (np.array[float]) : sample where the margins are uniform on [0,1]
+            sample (np.array[float]) : sample where the uniform margins where inverted by
+                                        a generalized inverse of a quantile function.
+    """
+
+    def _C(self,u,v):
+        """Return the value of the copula taken on (u,v)
+        .. math:: C(u,v) = (uv)^{A(\frac{log(v)}{log(uv)})}, \quad 0<u,v<1
+        """
+        value_ = math.pow(u*v, self._A(math.log(v) / math.log(u*v)))
+        return value_
+
+    def _Kappa(self,t):
+        """Return the value of Kappa taken on t
+        .. math:: Kappa(t) = A(t) - t*A'(t), \quad 0<t<1
+        """
+        return (self._A(t) - t * self._Adot(t))
+
+    def _Zeta(self, t):
+        """Return the value of Zeta taken on t
+        .. math:: Kappa(t) = A(t) + (1-t)*A'(t), \quad 0<t<1
+        """
+        return (self._A(t) + (1-t)*self._Adot(t))
+
+    def _dotC1(self,u,v):
+        """Return the value of \dot{C}_1 taken on (u,v)
+        .. math:: \dot{C}_1  = (C(u,v) / u) * (Kappa(log(v)/log(uv))), \quad 0<u,v<1
+        """
+        t = math.log(v) / math.log(u*v)
+        value_ = (self._C(u,v) / u) * self._Kappa(t)
+        return(value_)
+
+    def _dotC2(self, u,v):
+        """Return the value of \dot{C}_2 taken on (u,v)
+        .. math:: \dot{C}_2  = (C(u,v) / v) * (Zeta(log(v)/log(uv))), \quad 0<u,v<1
+        """
+        t = math.log(v) / math.log(u*v)
+        value_ = (self._C(u,v) / v) * self._Zeta(t)
+        return(value_)
+
+    def _generate_randomness(self):
+        """
+            Generate a bivariate sample draw identically and
+            independently from a uniform over the segment [0,1]
+            Inputs
+            ------
+            n_sample : length of the bivariate sample
+            Outputs
+            -------
+            n_sample x 2 np.array
+        """
+
+        v_1 = np.random.uniform(low = 0.0, high = 1.0, size = self.n_sample) # first sample
+        v_2 = np.random.uniform(low = 0.0, high = 1.0, size = self.n_sample) # second sample
+        output_ = np.vstack([v_1, v_2]).T
+        return output_
+
+    def sample_unimargin(self):
+        """
+            Draws a bivariate sample from extreme value copula
+            Margins are uniform
+        """
+        output = np.zeros((self.n_sample,2))
+        X = self._generate_randomness()
+        for i in range(0,self.n_sample):
+            v = X[i]
+            def func(x):
+                value_ = np.abs(self._dotC1(v[0],x) - v[1])
+                return(value_)
+            sol = minimize_scalar(lambda x : func(x),bounds = (0.0,1.0), method = "bounded")
+            sol = float(sol.x)
+            u = [v[0] , sol]
+            output[i,:] = u
+        return output
