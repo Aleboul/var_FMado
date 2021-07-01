@@ -5,7 +5,7 @@ from enum import Enum
 from scipy.optimize import minimize_scalar
 from scipy.stats import norm
 from scipy.integrate import quad, dblquad
-
+from scipy.optimize import brentq
 
 def min(a, b):
   
@@ -26,6 +26,10 @@ class CopulaTypes(Enum):
     NELSEN_18 = 18
     NELSEN_22 = 22
     HUSSLER_REISS = 23
+    ASYMMETRIC_LOGISTIC = 24
+    ASYMMETRIC_NEGATIVE_LOGISTIC = 25
+    ASSYMETRIC_MIXED_MODEL = 26
+    STUDENT = 27
 
 class Bivariate(object):
     """
@@ -52,8 +56,10 @@ class Bivariate(object):
     invalid_thetas = []
     theta = []
     n_sample = []
+    psi1 = []
+    psi2 = []
 
-    def __init__(self, copula_type = None, random_seed = None, theta = None, n_sample = None):
+    def __init__(self, copula_type = None, random_seed = None, theta = None, n_sample = None, psi1 = None, psi2 = None):
         """
             Initialize Bivariate object.
             Args:
@@ -65,6 +71,8 @@ class Bivariate(object):
         self.random_seed = random_seed
         self.theta = theta
         self.n_sample = n_sample
+        self.psi1 = psi1
+        self.psi2 = psi2
 
     def chech_theta(self):
         """
@@ -305,18 +313,19 @@ class Extreme(Bivariate):
 
     def sample_unimargin(self):
         """
-            Draws a bivariate sample from extreme value copula
+            Draws a bivariate sample from archimedean copula
             Margins are uniform
         """
+        Epsilon = 1e-12
         output = np.zeros((self.n_sample,2))
         X = self._generate_randomness()
         for i in range(0,self.n_sample):
             v = X[i]
             def func(x):
-                value_ = np.abs(self._dotC1(v[0],x) - v[1])
+                value_ = self._dotC1(v[0],x) - v[1]
                 return(value_)
-            sol = minimize_scalar(lambda x : func(x),bounds = (0.0,1.0), method = "bounded")
-            sol = float(sol.x)
-            u = [v[0] , sol]
+            sol = brentq(func, Epsilon,1-Epsilon)
+            print(func(sol))
+            u = [v[0], sol]
             output[i,:] = u
         return output
