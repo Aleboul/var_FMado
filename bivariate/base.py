@@ -74,7 +74,7 @@ class Bivariate(object):
         self.psi1 = psi1
         self.psi2 = psi2
 
-    def chech_theta(self):
+    def check_theta(self):
         """
             Validate the theta inserted
             Raises :
@@ -266,6 +266,9 @@ class Extreme(Bivariate):
         value_ = math.pow(u*v, self._A(math.log(v) / math.log(u*v)))
         return value_
 
+    def _f(self, lmbd):
+        return math.pow(lmbd*(1-lmbd)/(self._A(lmbd)+ lmbd*(1-lmbd)),2)
+
     def _Kappa(self,t):
         """Return the value of Kappa taken on t
         .. math:: Kappa(t) = A(t) - t*A'(t), \quad 0<t<1
@@ -325,7 +328,53 @@ class Extreme(Bivariate):
                 value_ = self._dotC1(v[0],x) - v[1]
                 return(value_)
             sol = brentq(func, Epsilon,1-Epsilon)
-            print(func(sol))
             u = [v[0], sol]
             output[i,:] = u
         return output
+
+    def sample(self):
+        """
+        
+        """
+        intput = self.sample_unimargin()
+        output = np.zeros((self.n_sample,2))
+        ncol = intput.shape[1]
+        for i in range(0, ncol):
+            output[:,i] = norm.ppf(intput[:,i])
+
+        return (output)
+
+    def _integrand_ev1(self,s, lmbd):
+        value_ = self._A(s) + (1-s)*(self._A(lmbd)/(1-lmbd) - (1-lmbd) -1) -s*lmbd+1
+        return math.pow(value_,-2)
+    def _integrand_ev2(self, s, lmbd):
+        value_ = self._A(s)+s*(self._A(lmbd)/lmbd - lmbd -1) - (1-s)*(1-lmbd)+1
+        return math.pow(value_,-2)
+
+    def _integrand_ev3(self, s, lmbd):
+        value_ = self._A(s)+(1-s)*(self._A(lmbd)/(1-lmbd) - (1-lmbd)-1) + s*(self._A(lmbd)/lmbd - lmbd - 1) + 1
+        return math.pow(value_, -2)
+
+    def extreme_var_FMado(self, lmbd):
+        """
+        
+        """
+        value_11 = self._A(lmbd) / (self._A(lmbd) + 2*lmbd*(1-lmbd))
+        value_12 = (math.pow(self._Kappa(lmbd),2) * (1-lmbd)) / (2*self._A(lmbd) - (1-lmbd) + 2*lmbd*(1-lmbd))
+        value_13 = (math.pow(self._Zeta(lmbd),2) * lmbd) / (2*self._A(lmbd) - lmbd + 2*lmbd*(1-lmbd))
+        value_1  = self._f(lmbd) * (value_11 + value_12 + value_13)
+
+        value_21 = (math.pow(1-lmbd,2) - self._A(lmbd)) / (2*self._A(lmbd) - (1-lmbd)+2*lmbd*(1-lmbd))
+        value_22 = quad(lambda s : self._integrand_ev1(s, lmbd), 0.0, lmbd)[0]
+        value_2  = self._Kappa(lmbd) * self._f(lmbd) * value_21 + self._Kappa(lmbd)*lmbd*(1-lmbd)*value_22
+
+        value_31 = (math.pow(lmbd,2)-self._A(lmbd)) / (2*self._A(lmbd) - lmbd + 2*lmbd*(1-lmbd))
+        value_32 = quad(lambda s : self._integrand_ev2(s,lmbd),lmbd,1.0)[0]
+        value_3  = self._Zeta(lmbd) * self._f(lmbd) * value_31 + self._Zeta(lmbd) * lmbd * (1-lmbd)*value_32
+
+        value_41 = self._f(lmbd)*self._Kappa(lmbd)*self._Zeta(lmbd)
+        value_42 = quad(lambda s : self._integrand_ev3(s, lmbd), 0.0, 1.0)[0]
+        value_4  = -value_41 + self._Kappa(lmbd) * self._Zeta(lmbd) * lmbd * (1-lmbd) * value_42
+
+        value_  = value_1 - 2 * value_2 - 2 * value_3 + 2 * value_4
+        return(value_)
