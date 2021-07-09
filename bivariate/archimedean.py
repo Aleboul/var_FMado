@@ -7,7 +7,7 @@ class Clayton(Archimedean):
 
     copula_type = CopulaTypes.CLAYTON
     theta_interval = [-1,float('inf')] 
-    invalid_thetas = []
+    invalid_thetas = [0]
 
     def _generator(self, t):
         """Return the generator function.
@@ -28,13 +28,39 @@ class Clayton(Archimedean):
         value_ = - np.power(t, -self.theta-1)
         return(value_)
 
+class Nelsen_2(Archimedean):
+    """Class for nelsen 2 copula model"""
+
+    copula_type = CopulaTypes.NELSEN_2
+    theta_interval = [1,float('inf')] 
+    invalid_thetas = []
+
+    def _generator(self, t):
+        """Return the generator function.
+        .. math:: \phi(t) = (1-t)^\theta, \quad 0 < t < 1
+        """
+        return np.power(1-t, self.theta)
+
+    def _generator_inv(self, t):
+        """Return the generator inverse.
+        .. math:: \phi^\leftarrow(u) = e^{-t^{1/\theta}}, \quad t \geq 0
+        """
+        return 1 - np.power(t, 1 / self.theta)
+
+    def _generator_dot(self, t):
+        """Return the derivative of the generator function
+        .. math:: \phi'(t) = -\theta(1-t)^{\theta-1}, \quad 0 < t < 1
+        """
+        value_ = - self.theta * np.power(1-t, self.theta - 1)
+        return(value_)
+
 
 class Amh(Archimedean):
     """Class for AMH copula model"""
 
     copula_type = CopulaTypes.AMH
-    theta_interval = [-1,1] 
-    invalid_thetas = []
+    theta_interval = [-1.0,1.0] 
+    invalid_thetas = [1.0]
 
     def _generator(self, t):
         """Return the generator function.
@@ -89,8 +115,8 @@ class Frank(Archimedean):
     """Class for a frank copula model"""
 
     copula_type = CopulaTypes.FRANK
-    theta_interval = [] 
-    invalid_thetas = []
+    theta_interval = [-float('inf'), float('inf')]
+    invalid_thetas = [0]
 
     def _generator(self, t):
         """Return the generator function.
@@ -110,6 +136,35 @@ class Frank(Archimedean):
         """
         value_1 = self.theta * np.exp(-self.theta * t)
         value_2 = np.exp(-self.theta*t) - 1
+        return(value_1 / value_2)
+
+class Nelsen_7(Archimedean):
+    """Class for a nelsen_7 copula model"""
+
+    copula_type = CopulaTypes.NELSEN_7
+    theta_interval = [0.0, 1.0]
+    invalid_thetas = [0.0]
+
+    def _generator(self, t):
+        """Return the generator function.
+        .. math:: \phi(t) = , \quad 0 < t < 1
+        """
+        return -np.log(self.theta*t + (1-self.theta))
+
+    def _generator_inv(self, t):
+        """Return the generator inverse.
+        .. math:: (1-\theta) / (exp(t) - \theta), \quad t \geq 0
+        """
+        value_1 = np.exp(-t) - (1-self.theta)
+        value_2 = self.theta
+        return value_1 / value_2
+
+    def _generator_dot(self, t):
+        """Return the derivative of the generator function
+        .. math:: \phi'(t) = \theta(-ln(t))^\theta / (t*ln(t))
+        """
+        value_1 = -self.theta
+        value_2 = self.theta*t + (1-self.theta)
         return(value_1 / value_2)
 
 class Joe(Archimedean):
@@ -144,7 +199,7 @@ class Nelsen_9(Archimedean):
 
     copula_type = CopulaTypes.NELSEN_9
     theta_interval = [0,1] 
-    invalid_thetas = []
+    invalid_thetas = [0]
 
     def _generator(self, t):
         """Return the generator function.
@@ -165,6 +220,88 @@ class Nelsen_9(Archimedean):
         value_1 = self.theta
         value_2 = t * (self.theta * np.log(t) - 1)
         return(value_1 / value_2)
+
+class Nelsen_10(Archimedean):
+    """Class for Nelsen_10 copula model"""
+
+    copula_type = CopulaTypes.NELSEN_10
+    theta_interval = [0,1] 
+    invalid_thetas = [0]
+
+    def _generator(self, t):
+        """Return the generator function.
+        .. math:: \phi(t) = 1/\theta(t^{-\theta}-1), \quad 0 < t < 1
+        """
+        return np.log(2*np.power(t,-self.theta)-1)
+
+    def _generator_inv(self, t):
+        """Return the generator inverse.
+        .. math:: (1-\theta) / (exp(t) - \theta), \quad t \geq 0
+        """
+        value_1 = np.exp(t) + 1
+        value_2 = 2
+        return(np.power(value_1 / value_2, -1/self.theta))
+
+    def _generator_dot(self, t):
+        """Return the derivative of the generator function
+        .. math:: \phi'(t) = \theta(-ln(t))^\theta / (t*ln(t))
+        """
+        value_1 = -self.theta*2*np.power(t,-1-self.theta)
+        value_2 = 2*np.power(t,-self.theta)-1
+        return(value_1 / value_2)
+
+class Nelsen_12(Archimedean):
+    """Class for Nelsen_12 copula model"""
+
+    copula_type = CopulaTypes.NELSEN_12
+    theta_interval = [0,float('inf')] 
+    invalid_thetas = [0]
+
+    def _generator(self, t):
+        """Return the generator function.
+        .. math:: \phi(t) = 1/\theta(t^{-\theta}-1), \quad 0 < t < 1
+        """
+        return np.power(1/t - 1 , self.theta)
+
+    def _generator_inv(self, t):
+        """Return the generator inverse.
+        .. math:: (1-\theta) / (exp(t) - \theta), \quad t \geq 0
+        """
+        value_1 = 1 + np.power(t, 1/self.theta)
+        return(np.power(value_1,-1))
+
+    def _generator_dot(self, t):
+        """Return the derivative of the generator function
+        .. math:: \phi'(t) = \theta(-ln(t))^\theta / (t*ln(t))
+        """
+        value_ = self.theta*(-1/np.power(t,2))*np.power(1/t - 1, self.theta - 1)
+        return(value_)
+
+class Nelsen_15(Archimedean):
+    """Class for Nelsen_15 copula model"""
+
+    copula_type = CopulaTypes.NELSEN_15
+    theta_interval = [1,float('inf')] 
+    invalid_thetas = []
+
+    def _generator(self, t):
+        """Return the generator function.
+        .. math:: \phi(t) = 1/\theta(t^{-\theta}-1), \quad 0 < t < 1
+        """
+        return np.power(1-np.power(t, 1/self.theta) , self.theta)
+
+    def _generator_inv(self, t):
+        """Return the generator inverse.
+        .. math:: (1-\theta) / (exp(t) - \theta), \quad t \geq 0
+        """
+        return(np.power(1-np.power(t, 1/self.theta) , self.theta))
+
+    def _generator_dot(self, t):
+        """Return the derivative of the generator function
+        .. math:: \phi'(t) = \theta(-ln(t))^\theta / (t*ln(t))
+        """
+        value_ = - np.power(t, 1/self.theta - 1)*np.power(1-np.power(t, self.theta), self.theta - 1)
+        return(value_)
 
 class Nelsen_18(Archimedean):
     """Class for Nelsen_18 copula model"""

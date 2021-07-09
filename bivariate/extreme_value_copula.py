@@ -37,7 +37,7 @@ class Asy_log(Extreme):
     """Class for asymmetric logistic model copula model"""
 
     copula_type = CopulaTypes.ASYMMETRIC_LOGISTIC
-    theta_interval = [1,float('inf')] 
+    theta_interval = [0,float('inf')] 
     invalid_thetas = []
 
     def _A(self, t):

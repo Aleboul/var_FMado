@@ -2,8 +2,6 @@ import numpy as np
 import math
 
 from enum import Enum
-from scipy.optimize import minimize_scalar
-from scipy.stats import norm
 from scipy.integrate import quad, dblquad
 from scipy.optimize import brentq
 
@@ -18,11 +16,16 @@ class CopulaTypes(Enum):
     """ Available copula families. """
 
     CLAYTON = 1
+    NELSEN_2 = 2
     AMH = 3
     GUMBEL = 4
     FRANK = 5
     JOE = 6
+    NELSEN_7 = 7
     NELSEN_9 = 9
+    NELSEN_10 = 10
+    NELSEN_12 = 12
+    NELSEN_15 = 15
     NELSEN_18 = 18
     NELSEN_22 = 22
     HUSSLER_REISS = 23
@@ -49,9 +52,10 @@ class Bivariate(object):
                 :attr:`theta_interval`, shouldn't be considered valid.
             theta(float) : Parameter for the copula
             var_FMado(float) : value of the theoretical variance for a given point in [0,1]
+            sample (np.array[float]) : sample where the uniform margins are inverted by
+                                        a generalized inverse of a cdf.
     """
     copula_type = None
-    _subclasses = []
     theta_interval = []
     invalid_thetas = []
     theta = []
@@ -59,7 +63,7 @@ class Bivariate(object):
     psi1 = []
     psi2 = []
 
-    def __init__(self, copula_type = None, random_seed = None, theta = None, n_sample = None, psi1 = None, psi2 = None):
+    def __init__(self, random_seed = None, theta = None, n_sample = None, psi1 = None, psi2 = None):
         """
             Initialize Bivariate object.
             Args:
@@ -78,13 +82,106 @@ class Bivariate(object):
         """
             Validate the theta inserted
             Raises :
-                ValueError : If thete is not in :attr:`theta_interval` or is in :attr:`invalid_thetas`,
+                ValueError : If there is not in :attr:`theta_interval` or is in :attr:`invalid_thetas`,
 
         """
         lower, upper = self.theta_interval
         if (not lower <= self.theta <= upper) or (self.theta in self.invalid_thetas):
             message = 'The inserted theta value {} is out of limits for the given {} copula.'
             raise ValueError(message.format(self.theta, self.copula_type.name))
+
+    def _generate_randomness(self):
+        """
+            Generate a bivariate sample draw identically and
+            independently from a uniform over the segment [0,1]
+            Inputs
+            ------
+            n_sample : length of the bivariate sample
+            Outputs
+            -------
+            n_sample x 2 np.array
+        """
+        np.random.seed(self.random_seed)
+        v_1 = np.random.uniform(low = 0.0, high = 1.0, size = self.n_sample)
+        v_2 = np.random.uniform(low = 0.0, high = 1.0, size = self.n_sample)
+        output_ = np.vstack([v_1, v_2]).T
+        return output_
+
+    def sample(self, inv_cdf):
+        """
+            Draws a bivariate sample from archimedean copula and invert it by
+            a given generalized inverse of cumulative distribution function
+            Inputs
+            ------
+            inv_cdf : generalized inverse of cumulative distribution function
+            Outputs
+            -------
+            n_sample x 2 np.array
+        """
+        intput = self.sample_unimargin()
+        output = np.zeros((self.n_sample,2))
+        ncol = intput.shape[1]
+        for i in range(0, ncol):
+            output[:,i] = inv_cdf(intput[:,i])
+
+        return (output)
+
+class Archimedean(Bivariate):
+    """
+        Base class for bivariate archimedean copulas.
+        This class allows to use methods which use the generator 
+        function and its inverse.
+        
+        Inputs
+        ------
+
+        Attributes
+        ----------
+            sample_uni (np.array[float]) : sample where the margins are uniform on [0,1].
+            var_FMado ([float]) : give the asymptotic variance of the lambda-FMadogram 
+                                  for an archimedean copula.
+    """
+
+    def _C(self,u,v):
+        """Return the value of the copula taken on (u,v)
+        .. math:: C(u,v) = \phi^\leftarrow (\phi(u) + \phi(v)), \quad 0<u,v<1
+        """
+        value_ = self._generator_inv(self._generator(u) + self._generator(v))
+        return value_
+    def _dotC1(self,u,v):
+        """Return the value of the first partial derivative taken on (u,v)
+        .. math:: C(u,v) = \phi'(u) / \phi'(C(u,v)), \quad 0<u,v<1
+        """ 
+        value_1 = self._generator_dot(u) 
+        value_2 = self._generator_dot(self._C(u,v))
+        return value_1 / value_2
+
+    def _dotC2(self,u,v):
+        """Return the value of the first partial derivative taken on (u,v)
+        .. math:: C(u,v) = \phi'(v) / \phi'(C(u,v)), \quad 0<u,v<1
+        """
+        value_1 = self._generator_dot(v) 
+        value_2 = self._generator_dot(self._C(u,v))
+        return value_1 / value_2
+
+    def sample_unimargin(self):
+        """
+            Draws a bivariate sample from archimedean copula
+            Margins are uniform
+        """
+        self.check_theta()
+        output = np.zeros((self.n_sample,2))
+        X = self._generate_randomness()
+        Epsilon = 1e-12
+        for i in range(0,self.n_sample):
+            v = X[i]
+            def func(x):
+                value_ = ( x - self._generator(x) / self._generator_dot(x)) - v[1]
+                return(value_)
+            sol = brentq(func, Epsilon,1-Epsilon)
+            u = [self._generator_inv(v[0] * self._generator(sol)) , self._generator_inv((1-v[0])*self._generator(sol))]
+            output[i,:] = u
+        return output
 
     def _integrand_v1(self,x,y,lmbd):
         u1 = math.pow(x,1/lmbd)
@@ -151,6 +248,9 @@ class Bivariate(object):
         return(value_)
 
     def var_FMado(self,lmbd):
+        """
+            Compute the asymptotic variance of the lambda-FMadogram
+        """
         v1 = dblquad(lambda x,y : self._integrand_v1(x,y, lmbd), 0,1.0, 0, 1.0)[0]
         v2 = dblquad(lambda x,y : self._integrand_v2(x,y, lmbd), 0,1.0, 0, 1.0)[0]
         v3 = dblquad(lambda x,y : self._integrand_v3(x,y, lmbd), 0,1.0, 0, 1.0)[0]
@@ -159,104 +259,19 @@ class Bivariate(object):
         cv23 = dblquad(lambda x,y : self._integrand_cv23(x,y, lmbd), 0,1.0, 0, 1.0)[0]
         return(v1 + v2 + v3 - 2*cv12 - 2*cv13 + 2 * cv23)
 
-class Archimedean(Bivariate):
-    """
-        Base class for bivariate archimedean copulas.
-        This class allows to use methods which use the generator 
-        function and its inverse.
-        
-        Inputs
-        ------
-
-        Attributes
-        ----------
-            sample_uni (np.array[float]) : sample where the margins are uniform on [0,1]
-            sample (np.array[float]) : sample where the uniform margins where inverted by
-                                        a generalized inverse of a quantile function.
-    """
-
-    def _C(self,u,v):
-        """Return the value of the copula taken on (u,v)
-        .. math:: C(u,v) = \phi^\leftarrow (\phi(u) + \phi(v)), \quad 0<u,v<1
-        """
-        value_ = self._generator_inv(self._generator(u) + self._generator(v))
-        return value_
-    def _dotC1(self,u,v):
-        """Return the value of the first partial derivative taken on (u,v)
-        .. math:: C(u,v) = \phi'(u) / \phi'(C(u,v)), \quad 0<u,v<1
-        """ 
-        value_1 = self._generator_dot(u) 
-        value_2 = self._generator_dot(self._C(u,v))
-        return value_1 / value_2
-
-    def _dotC2(self,u,v):
-        """Return the value of the first partial derivative taken on (u,v)
-        .. math:: C(u,v) = \phi'(v) / \phi'(C(u,v)), \quad 0<u,v<1
-        """
-        value_1 = self._generator_dot(v) 
-        value_2 = self._generator_dot(self._C(u,v))
-        return value_1 / value_2
-
-    def _generate_randomness(self):
-        """
-            Generate a bivariate sample draw identically and
-            independently from a uniform over the segment [0,1]
-            Inputs
-            ------
-            n_sample : length of the bivariate sample
-            Outputs
-            -------
-            n_sample x 2 np.array
-        """
-
-        v_1 = np.random.uniform(low = 0.0, high = 1.0, size = self.n_sample) # first sample
-        v_2 = np.random.uniform(low = 0.0, high = 1.0, size = self.n_sample) # second sample
-        output_ = np.vstack([v_1, v_2]).T
-        return output_
-
-    def sample_unimargin(self):
-        """
-            Draws a bivariate sample from archimedean copula
-            Margins are uniform
-        """
-        output = np.zeros((self.n_sample,2))
-        X = self._generate_randomness()
-        for i in range(0,self.n_sample):
-            v = X[i]
-            def func(x):
-                value_ = np.abs(( x - self._generator(x) / self._generator_dot(x)) - v[1])
-                return(value_)
-            sol = minimize_scalar(func, bounds = (0,1), method = "bounded")
-            sol = float(sol.x)
-            u = [self._generator_inv(v[0] * self._generator(sol)) , self._generator_inv((1-v[0])*self._generator(sol))]
-            output[i,:] = u
-        return output
-
-    def sample(self):
-        """
-        
-        """
-        intput = self.sample_unimargin()
-        output = np.zeros((self.n_sample,2))
-        ncol = intput.shape[1]
-        for i in range(0, ncol):
-            output[:,i] = norm.ppf(intput[:,i])
-
-        return (output)
-
 class Extreme(Bivariate):
     """
         Base class for extreme value copulas.
-        This class allows to use methods which use the Pickans dependence function.
+        This class allows to use methods which use the Pickands dependence function.
         
         Inputs
         ------
 
         Attributes
         ----------
-            sample_uni (np.array[float]) : sample where the margins are uniform on [0,1]
-            sample (np.array[float]) : sample where the uniform margins where inverted by
-                                        a generalized inverse of a quantile function.
+            sample_uni (np.array[float]) : sample where the margins are uniform on [0,1].
+            var_FMado ([float]) : give the asymptotic variance of the lambda-FMadogram
+                                  for an extreme value copula.
     """
 
     def _C(self,u,v):
@@ -316,9 +331,10 @@ class Extreme(Bivariate):
 
     def sample_unimargin(self):
         """
-            Draws a bivariate sample from archimedean copula
+            Draw a bivariate sample from archimedean copula
             Margins are uniform
         """
+        self.check_theta()
         Epsilon = 1e-12
         output = np.zeros((self.n_sample,2))
         X = self._generate_randomness()
@@ -332,18 +348,6 @@ class Extreme(Bivariate):
             output[i,:] = u
         return output
 
-    def sample(self):
-        """
-        
-        """
-        intput = self.sample_unimargin()
-        output = np.zeros((self.n_sample,2))
-        ncol = intput.shape[1]
-        for i in range(0, ncol):
-            output[:,i] = norm.ppf(intput[:,i])
-
-        return (output)
-
     def _integrand_ev1(self,s, lmbd):
         value_ = self._A(s) + (1-s)*(self._A(lmbd)/(1-lmbd) - (1-lmbd) -1) -s*lmbd+1
         return math.pow(value_,-2)
@@ -355,9 +359,10 @@ class Extreme(Bivariate):
         value_ = self._A(s)+(1-s)*(self._A(lmbd)/(1-lmbd) - (1-lmbd)-1) + s*(self._A(lmbd)/lmbd - lmbd - 1) + 1
         return math.pow(value_, -2)
 
-    def extreme_var_FMado(self, lmbd):
+    def var_FMado(self, lmbd):
         """
-        
+            Compute asymptotic variance of lambda-FMadogram using the specific form for
+            bivariate extreme value copula.
         """
         value_11 = self._A(lmbd) / (self._A(lmbd) + 2*lmbd*(1-lmbd))
         value_12 = (math.pow(self._Kappa(lmbd),2) * (1-lmbd)) / (2*self._A(lmbd) - (1-lmbd) + 2*lmbd*(1-lmbd))
@@ -377,4 +382,4 @@ class Extreme(Bivariate):
         value_4  = -value_41 + self._Kappa(lmbd) * self._Zeta(lmbd) * lmbd * (1-lmbd) * value_42
 
         value_  = value_1 - 2 * value_2 - 2 * value_3 + 2 * value_4
-        return(value_)
+        return value_
