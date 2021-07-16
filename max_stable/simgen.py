@@ -9,7 +9,7 @@ from tqdm import tqdm
 from scipy.stats import norm
 
 """
-    range is sqrt(2) * sigma
+	Extract a sample from smith process generated with R and work with it (plot several figures).
 """
 
 def V(h, lmbd):
