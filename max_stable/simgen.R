@@ -1,5 +1,9 @@
 library(SpatialExtremes)
 
+"""
+    Simulate a Smith process and Estimate Lambda-FMadogram with the realisations.
+"""
+
 fmado_ <- function(X, lmbd){
     Nnb = ncol(X)
     Tnb = nrow(X)
