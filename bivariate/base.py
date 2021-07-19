@@ -3,7 +3,7 @@ import math
 
 from enum import Enum
 from scipy.integrate import quad, dblquad
-from scipy.optimize import brentq
+from scipy.optimize import brentq, minimize_scalar
 
 def min(a, b):
   
@@ -16,17 +16,17 @@ class CopulaTypes(Enum):
     """ Available copula families. """
 
     CLAYTON = 1
-    NELSEN_2 = 2
     AMH = 3
     GUMBEL = 4
     FRANK = 5
     JOE = 6
-    NELSEN_7 = 7
     NELSEN_9 = 9
     NELSEN_10 = 10
     NELSEN_12 = 12
+    NELSEN_13 = 13
+    NELSEN_14 = 14
     NELSEN_15 = 15
-    NELSEN_18 = 18
+    NELSEN_16 = 16
     NELSEN_22 = 22
     HUSSLER_REISS = 23
     ASYMMETRIC_LOGISTIC = 24
@@ -175,10 +175,14 @@ class Archimedean(Bivariate):
         Epsilon = 1e-12
         for i in range(0,self.n_sample):
             v = X[i]
+            #def func(x):
+            #    value_ = ( x - self._generator(x) / self._generator_dot(x)) - v[1]
+            #    return(value_)
             def func(x):
-                value_ = ( x - self._generator(x) / self._generator_dot(x)) - v[1]
-                return(value_)
-            sol = brentq(func, Epsilon,1-Epsilon)
+                value_ = np.abs((x - self._generator(x) / self._generator_dot(x)) - v[1])
+                return value_
+            sol = minimize_scalar(func, bounds = (0.0,1.0), method = 'bounded').x
+            print('solution is :', sol, 'value of the solution is : ', func(sol))
             u = [self._generator_inv(v[0] * self._generator(sol)) , self._generator_inv((1-v[0])*self._generator(sol))]
             output[i,:] = u
         return output
