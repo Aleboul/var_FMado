@@ -93,7 +93,7 @@ class Monte_Carlo(object):
                 else :
                     F_x = np.squeeze(X[j,:])
                     G_y = np.squeeze(X[i,:])
-                    d = np.linalg.norm((np.power(F_x,self.lmbd) - np.power(G_y,1-self.lmbd)), ord = 1) #- (self.lmbd) * np.sum((1-np.power(F_x,self.lmbd))) - (1-self.lmbd) * np.sum((1 - np.power(G_y, 1 - self.lmbd))) # formula of the normalized lmbd madogram estimator, see Naveau 2009
+                    d = np.linalg.norm((np.power(F_x,self.lmbd) - np.power(G_y,1-self.lmbd)), ord = 1) - (self.lmbd) * np.sum((1-np.power(F_x,self.lmbd))) - (1-self.lmbd) * np.sum((1 - np.power(G_y, 1 - self.lmbd))) # formula of the normalized lmbd madogram estimator, see Naveau 2009
                     dist[i,j] = d
                     dist[j,i] = d
         return dist
@@ -119,14 +119,14 @@ class Monte_Carlo(object):
             X_vec = np.array(X[:,p])
             Femp = self._ecdf(X_vec)
             V[:,p] = Femp
-        Fmado = self._dist(np.transpose(V)) / (2 * Tnb) #+ (1/2) * ((1 - self.lmbd*(1-self.lmbd))/ ((2-self.lmbd)*(1+self.lmbd)))
+        Fmado = self._dist(np.transpose(V)) / (2 * Tnb) + (1/2) * ((1 - self.lmbd*(1-self.lmbd))/ ((2-self.lmbd)*(1+self.lmbd)))
 
         return Fmado
     def true_FMado(self,x):
 	    value = (1/2) * ((x / (1+x*(1-x))) * (1 - 1 / (1 + x)) + ((1 - x) / (x * (2 - x) + 1 - x)) * (1 - 1 / (2 - x)))
 	    return value
     
-    def simu(self):
+    def simu(self, inv_cdf):
         """
             Perform Monte Carlo simulation
         """
@@ -135,7 +135,7 @@ class Monte_Carlo(object):
 
         for k in range(self.n_iter):
             FMado_store = np.zeros(len(self.n_sample))
-            obs_all = self.copula.sample()
+            obs_all = self.copula.sample(inv_cdf)
             for i in range(0, len(self.n_sample)):
                 obs = obs_all[:self.n_sample[i]]
                 FMado = self._fmado(obs)
