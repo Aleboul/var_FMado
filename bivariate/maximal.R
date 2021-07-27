@@ -2,6 +2,10 @@ library(VineCopula)
 library(doRNG)
 library(dplyr)
 
+"""
+	Generate synthetic data from a t-copula and take the maximum
+"""
+
 prefix = "/home/aboulin/Documents/stage/var_FMado/bivariate/output/"
 
 target <- list()
