@@ -12,7 +12,7 @@ import pickle
 plt.style.use('seaborn-whitegrid')
 from matplotlib import cm
 n = 100
-theta = 0.2
+theta = 0.8
 
 
 with open("output/max_student_M100_n128.txt", "rb") as data:
