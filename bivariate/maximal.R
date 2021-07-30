@@ -2,10 +2,6 @@ library(VineCopula)
 library(doRNG)
 library(dplyr)
 
-"""
-	Generate synthetic data from a t-copula and take the maximum
-"""
-
 prefix = "/home/aboulin/Documents/stage/var_FMado/bivariate/output/"
 
 target <- list()
@@ -29,14 +25,14 @@ target$robservation <- function(randomness){
 }
 
 M = 100 # number of iteration
-n = c(256) # length of sample
-nmax_ = c(16,32,64,128,256,512)
+n = c(128) # length of sample
+nmax_ = c(16,32,64,128,256,512)#c(128,256,512,1024)
 
-filename <- paste0(prefix, "max_student_M", M, "_n", nmax_[6], ".txt")
+filename <- paste0(prefix, "max_student_M", M, "_n", n, ".txt")
 
 simu = function(target){
 	foreach(rep = 1:M, .combine = rbind) %dorng% {
-		# foreach is a function that create a loop and we, at each iteration, we increment the matrix of results (here output)
+		# foreach is a function that create a loop and we, at each iteration, increment the matrix of results (here output)
 		# using rbind.
 		# Allocate space for output
 
@@ -46,14 +42,15 @@ simu = function(target){
 
 		# generate all observations and sets of randomness to be used
 		obs_rand = target$generate_randomness(max(n)) # we produce our bivariate vector of data
-		obs_all = target$robservation(obs_rand) # some data are now hidden
+		obs_all = target$robservation(obs_rand)
 
 		for(i in 1:length(n)){
 			t_FMado = proc.time() # we compute the time to estimate
 			# subset observations
 			obs = obs_all[1:n[i],] # we pick the n[i] first rows, i.e 50 rows for the first, 100 for the second
 			### We compute the lambda FMadogram
-			FMado = fmado_(obs[,1], obs[,2], lambda) # we compute now the lambda-FMadogram (the normalized one)
+
+			FMado = fmado_(qnorm(obs[,1]), qnorm(obs[,2]), lambda) # we compute now the lambda-FMadogram (the normalized one)
 			t_FMado = proc.time() - t_FMado
 
 			# Save the results
