@@ -122,9 +122,6 @@ class Monte_Carlo(object):
         Fmado = self._dist(np.transpose(V)) / (2 * Tnb) + (1/2) * ((1 - self.lmbd*(1-self.lmbd))/ ((2-self.lmbd)*(1+self.lmbd)))
 
         return Fmado
-    def true_FMado(self,x):
-	    value = (1/2) * ((x / (1+x*(1-x))) * (1 - 1 / (1 + x)) + ((1 - x) / (x * (2 - x) + 1 - x)) * (1 - 1 / (2 - x)))
-	    return value
     
     def simu(self, inv_cdf):
         """
