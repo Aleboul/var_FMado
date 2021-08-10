@@ -32,11 +32,11 @@ class Monte_Carlo(object):
 
     def __init__(self, n_iter = None, n_sample = [], lmbd = 0.5, random_seed = None, copula = None, p = [1.0,1.0]):
 	
-		self.n_iter = n_iter
-		self.n_sample = n_sample
-		self.lmbd = lmbd
-		self.copula = copula
-		self.p = p
+	self.n_iter = n_iter
+	self.n_sample = n_sample
+	self.lmbd = lmbd
+	self.copula = copula
+	self.p = p
 		
     def check_lmbd(self):
 		"""
