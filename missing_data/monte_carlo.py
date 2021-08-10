@@ -30,16 +30,18 @@ class Monte_Carlo(object):
     random_seed = None
     copula = None
 
-    def __init__(self, n_iter = None, n_sample = [], lmbd = 0.5, random_seed = None, copula = None, p = [1.0,1.0]):
-	
-	self.n_iter = n_iter
-	self.n_sample = n_sample
-	self.lmbd = lmbd
-	self.copula = copula
+    def __init__(self, n_iter = None, n_sample = [], lmbd = 0.5, random_seed = None, copula = None, p =[1.0,1.0]):
+        """
+            Initialize Monte_Carlo object
+        """
+        self.n_iter = n_iter
+        self.n_sample = n_sample
+        self.lmbd = lmbd
+        self.copula = copula
 	self.p = p
-		
+
     def check_lmbd(self):
-		"""
+        """
             Validate the lmbd
             This method is used to assert the lmbd insert by the user.
             Raises :
@@ -51,13 +53,12 @@ class Monte_Carlo(object):
             message = "The lmbd value {} is out of limits for the given estimation."
             raise ValueError(message.format(self.lmbd))
 
-    def _ecdf(self, data, miss):
+    def _ecdf(self,data,miss):
         """
             Compute ECDF of the data
             Inputs
             ------
             data : array of data
-			miss : array of indicator
             Outputs
             -------
             Empirical cumulative distribution function
@@ -66,7 +67,7 @@ class Monte_Carlo(object):
         index = np.argsort(data)
         ecdf = np.zeros(len(index))
         for i in index:
-            ecdf[i] = (1.0 / np.sum(miss)) * np.sum((data <= data[i]) * miss[0] * miss[1]) 
+            ecdf[i] = (1.0 / len(index)) * np.sum((data <= data[i]) * miss)
         return ecdf
 
 
@@ -78,7 +79,6 @@ class Monte_Carlo(object):
 	    	------
 	    	X : a matrix composed of ecdf
 	    	lmbd : a parameter between 0 and 1
-			miss : list of indicators
 	    	Outputs
 	    	-------
 	    	A matrix with quantity equals to 0 if i=j (diagonal) and equals to sum_t=1^T |F(X_t)^{\lmbd} - G(Y_t)^{1-\lmbd}| if i \neq j
@@ -94,12 +94,12 @@ class Monte_Carlo(object):
                 else :
                     F_x = np.squeeze(X[j,:]) * miss[0]
                     G_y = np.squeeze(X[i,:]) * miss[1]
-                    d = np.linalg.norm((np.power(F_x,self.lmbd) - np.power(G_y,1-self.lmbd)) * miss[0] * miss[1], ord = 1)
+                    d = np.linalg.norm((np.power(F_x,self.lmbd) - np.power(G_y,1-self.lmbd)) * miss[0] * miss[1], ord = 1) - (self.lmbd) * np.sum((1-np.power(F_x,self.lmbd))) - (1-self.lmbd) * np.sum((1 - np.power(G_y, 1 - self.lmbd))) # formula of the normalized lmbd madogram estimator, see Naveau 2009
                     dist[i,j] = d
                     dist[j,i] = d
         return dist
 
-    def _fmado(self, X, miss):
+    def _fmado(self, X):
         """
 		    This function computes the lmbd FMadogram
     
@@ -118,9 +118,9 @@ class Monte_Carlo(object):
         V = np.zeros([Tnb, Nnb])
         for p in range(0, Nnb):
             X_vec = np.array(X[:,p])
-            Femp = self._ecdf(X_vec, miss[p])
+            Femp = self._ecdf(X_vec)
             V[:,p] = Femp
-        Fmado = self._dist(np.transpose(V)) / (2 * miss[0] * miss[1]) 
+        Fmado = self._dist(np.transpose(V)) / (2 * np.sum(miss[0] * miss[1]))
 
         return Fmado
     
@@ -134,7 +134,6 @@ class Monte_Carlo(object):
         for k in range(self.n_iter):
             FMado_store = np.zeros(len(self.n_sample))
             obs_all = self.copula.sample(inv_cdf)
-			miss = [np.random.binomial(1,1-self.p[0], size = n), np.random.binomial(1,1-self.p[1], size = n)]
             for i in range(0, len(self.n_sample)):
                 obs = obs_all[:self.n_sample[i]]
                 FMado = self._fmado(obs)
