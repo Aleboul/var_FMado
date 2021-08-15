@@ -31,7 +31,7 @@ class Monte_Carlo(object):
 	random_seed = None
 	copula = None
 	
-	def __init__(self, n_iter = None, n_sample = [], lmbd = 0.5, random_seed = None, copula = None, p = [1.0,1.0]):
+	def __init__(self, n_iter = None, n_sample = [], lmbd = 0.5, random_seed = None, copula = None, p = [0.0,0.0]):
 		"""
 			Initialize Monte_Carlo object
 		"""
@@ -98,7 +98,7 @@ class Monte_Carlo(object):
 					d = np.linalg.norm((np.power(F_x,self.lmbd) - np.power(G_y,1-self.lmbd)) * miss[0] * miss[1], ord = 1)
 					dist[i,j] = d
 					dist[j,i] = d
-					
+
 		return dist
 		
 	def _fmado(self, X, miss) :
@@ -123,7 +123,7 @@ class Monte_Carlo(object):
 			X_vec = np.array(X[:,p])
 			Femp = self._ecdf(X_vec, miss)
 			V[:,p] = Femp
-		Fmado = self._dist(np.transpose(V, miss)) / (2 * np.sum(miss[0] * miss[1]))
+		FMado = self._dist(np.transpose(V), miss) / (2 * np.sum(miss[0] * miss[1]))
 		
 		return FMado
 		
@@ -142,6 +142,7 @@ class Monte_Carlo(object):
 				obs = obs_all[:self.n_sample[i]]
 				miss = [miss_all[0][:self.n_sample[i]],miss_all[1][:self.n_sample[i]]]
 				FMado = self._fmado(obs, miss)
+				FMado_store[i] = FMado[0,1]
 				
 			output_cbind = np.c_[FMado_store, self.n_sample, np.arange(len(self.n_sample))]
 			output.append(output_cbind)
