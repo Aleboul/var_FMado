@@ -1,7 +1,7 @@
 import numpy as np
 import math
 
-from var_FMado.bivariate.base import Bivariate, CopulaTypes, Extreme
+from base import Bivariate, CopulaTypes, Extreme
 from scipy.stats import norm
 from scipy.stats import t
 
