@@ -31,7 +31,7 @@ class Monte_Carlo(object):
 	random_seed = None
 	copula = None
 	
-	def __init__(self, n_iter = None, n_sample = [], lmbd = 0.5, random_seed = None, copula = None, p = [0.0,0.0]):
+	def __init__(self, n_iter = None, n_sample = [], lmbd = 0.5, random_seed = None, copula = None, p = [1.0,1.0]):
 		"""
 			Initialize Monte_Carlo object
 		"""
@@ -93,9 +93,9 @@ class Monte_Carlo(object):
 				if i == j:
 					dist[i,i] = 0
 				else :
-					F_x = np.squeeze(X[j,:]) * miss[0]
-					G_y = np.squeeze(X[i,:]) * miss[1]
-					d = np.linalg.norm((np.power(F_x,self.lmbd) - np.power(G_y,1-self.lmbd)) * miss[0] * miss[1], ord = 1)
+					F_x = np.squeeze(X[j,:])
+					G_y = np.squeeze(X[i,:])
+					d = np.linalg.norm((np.power(F_x,self.lmbd) - np.power(G_y,1-self.lmbd)) * (miss[0] * miss[1]), ord = 1)
 					dist[i,j] = d
 					dist[j,i] = d
 
@@ -121,7 +121,7 @@ class Monte_Carlo(object):
 		V = np.zeros([Tnb, Nnb])
 		for p in range(0, Nnb):
 			X_vec = np.array(X[:,p])
-			Femp = self._ecdf(X_vec, miss)
+			Femp = self._ecdf(X_vec, miss[p])
 			V[:,p] = Femp
 		FMado = self._dist(np.transpose(V), miss) / (2 * np.sum(miss[0] * miss[1]))
 		
@@ -137,7 +137,7 @@ class Monte_Carlo(object):
 		for k in range(self.n_iter):
 			FMado_store = np.zeros(len(self.n_sample))
 			obs_all = self.copula.sample(inv_cdf)
-			miss_all = [np.random.binomial(1,1-self.p[0],np.max(self.n_sample)),np.random.binomial(1,1-self.p[1],self.n_sample)]
+			miss_all = [np.random.binomial(1,self.p[0],np.max(self.n_sample)),np.random.binomial(1,self.p[1],self.n_sample)]
 			for i in range(0,len(self.n_sample)):
 				obs = obs_all[:self.n_sample[i]]
 				miss = [miss_all[0][:self.n_sample[i]],miss_all[1][:self.n_sample[i]]]
@@ -148,12 +148,12 @@ class Monte_Carlo(object):
 			output.append(output_cbind)
 		df_FMado = pd.DataFrame(np.concatenate(output))
 		df_FMado.columns = ['FMado', 'n', 'gp']
-		df_FMado['scaled'] = (df_FMado.FMado - df_FMado.groupby('n')['FMado'].transform('mean')) * np.sqrt(df_FMado.n)
+		df_FMado['scaled'] = (df_FMado.FMado - self.copula.true_FMado(self.lmbd)) * np.sqrt(df_FMado.n)
 		
 		return(df_FMado)
 		
 		
-	def exec_varlmbd(self, lmbds, n_lmbds = 50):
+	def exec_varlmbd(self, lmbds, inv_cdf, n_lmbds = 50):
 		if lmbds is None :
 			lmbds = np.linspace(0,1, n_lmbds)
 		else :
@@ -161,8 +161,8 @@ class Monte_Carlo(object):
 		for i, n in enumerate(self.n_sample):
 			var_lmbd = []
 			for lmbd in tqdm(lmbds):
-				self.lmbds = lmbd
-				output = self.simu()
+				self.lmbd = lmbd
+				output = self.simu(inv_cdf)
 				output = output['scaled'].var()
 				var_lmbd.append(output)
 				
