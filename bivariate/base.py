@@ -172,7 +172,6 @@ class Archimedean(Bivariate):
         self.check_theta()
         output = np.zeros((self.n_sample,2))
         X = self._generate_randomness()
-        Epsilon = 1e-12
         for i in range(0,self.n_sample):
             v = X[i]
             #def func(x):
@@ -361,6 +360,10 @@ class Extreme(Bivariate):
     def _integrand_ev3(self, s, lmbd):
         value_ = self._A(s)+(1-s)*(self._A(lmbd)/(1-lmbd) - (1-lmbd)-1) + s*(self._A(lmbd)/lmbd - lmbd - 1) + 1
         return math.pow(value_, -2)
+
+    def true_FMado(self, lmbd):
+        value_ = 0.5*(lmbd / (1+lmbd) + (1-lmbd)/(1+1-lmbd)) - (lmbd*(1-lmbd)) / (self._A(lmbd) + lmbd*(1-lmbd))
+        return value_
 
     def var_FMado(self, lmbd):
         """
