@@ -155,7 +155,7 @@ class Monte_Carlo(object):
             var_lmbd = []
             for lmbd in tqdm(lmbds):
                 self.lmbd = lmbd
-                output = self.simu(invècdf)
+                output = self.simu(inv_cdf)
                 output = output['scaled'].var()
                 var_lmbd.append(output)
 
