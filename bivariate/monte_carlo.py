@@ -146,7 +146,7 @@ class Monte_Carlo(object):
         
         return(df_FMado)
 
-    def exec_varlmbd(self, lmbds, n_lmbds = 50):
+    def exec_varlmbd(self, inv_cdf, lmbds, n_lmbds = 50):
         if lmbds is None:
             lmbds = np.linspace(0,1,n_lmbds)
         else :
@@ -155,7 +155,7 @@ class Monte_Carlo(object):
             var_lmbd = []
             for lmbd in tqdm(lmbds):
                 self.lmbd = lmbd
-                output = self.simu()
+                output = self.simu(invècdf)
                 output = output['scaled'].var()
                 var_lmbd.append(output)
 
