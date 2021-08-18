@@ -1,3 +1,7 @@
+"""
+    Juxtapose la variance empirique et celle théorique du lambda-FMado hybride (données manquantes)
+"""
+
 import extreme_value_copula
 import monte_carlo
 import numpy as np
