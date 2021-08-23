@@ -9,7 +9,7 @@ def gauss(x):
 
     return (1/math.pow(2*math.pi,1/2)) * math.exp(-math.pow(x,2)/2)
 
-class Hussler_Reiss(Extreme):
+class Husler_Reiss(Extreme):
     """Class for Hussler_Reiss copula model"""
 
     copula_type = CopulaTypes.HUSSLER_REISS

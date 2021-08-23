@@ -95,7 +95,7 @@ class Monte_Carlo(object):
 				else :
 					F_x = np.squeeze(X[j,:])
 					G_y = np.squeeze(X[i,:])
-					d = np.linalg.norm((np.power(F_x,self.lmbd) - np.power(G_y,1-self.lmbd)) * (miss[0] * miss[1]), ord = 1)
+					d = np.linalg.norm((np.power(F_x,self.lmbd) - np.power(G_y,1-self.lmbd)) * (miss[0] * miss[1]), ord = 1) - self.lmbd * np.sum((1-np.power(F_x,self.lmbd))* (miss[0] * miss[1])) - (1-self.lmbd) * np.sum((1-np.power(G_y,1-self.lmbd))* (miss[0] * miss[1]))
 					dist[i,j] = d
 					dist[j,i] = d
 
@@ -123,7 +123,7 @@ class Monte_Carlo(object):
 			X_vec = np.array(X[:,p])
 			Femp = self._ecdf(X_vec, miss[p])
 			V[:,p] = Femp
-		FMado = self._dist(np.transpose(V), miss) / (2 * np.sum(miss[0] * miss[1]))
+		FMado = self._dist(np.transpose(V), miss) / (2 * np.sum(miss[0] * miss[1])) + 0.5 * (1-self.lmbd + np.power(self.lmbd,2)) / ((1+self.lmbd) / (1+1-self.lmbd))
 		
 		return FMado
 		

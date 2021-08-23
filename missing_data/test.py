@@ -1,7 +1,3 @@
-"""
-    Juxtapose la variance empirique et celle théorique du lambda-FMado hybride (données manquantes)
-"""
-
 import extreme_value_copula
 import monte_carlo
 import numpy as np
@@ -13,10 +9,10 @@ from matplotlib import cm
 from scipy.stats import norm
 
 n = 1000
-n_iter = 500
+n_iter = 100
 n_sample = [256]
-theta = [5/2]
-psi1 = 1.0
+theta = [0.8]
+psi1 = 0.2
 psi2 = 1.0
 random_seed = 42
 p = [0.75,0.75]
@@ -26,7 +22,7 @@ var_lmbd = pd.DataFrame()
 for theta_ in theta:
     value = []
     var_lmbd_ = pd.DataFrame()
-    copula = extreme_value_copula.Asy_log(random_seed = 42, theta = theta_, n_sample = np.max(n_sample), psi1= psi1, psi2= psi2)
+    copula = extreme_value_copula.Student(random_seed = 42, theta = theta_, n_sample = np.max(n_sample), psi1= psi1, psi2= psi2)
     Monte = monte_carlo.Monte_Carlo(n_iter= n_iter, n_sample= n_sample, random_seed= random_seed, copula= copula, p = p)
     var = Monte.exec_varlmbd(lmbds= x, inv_cdf = norm.ppf)
     var_lmbd_['var_emp'] = var
@@ -46,4 +42,4 @@ sns.lineplot(data = var_lmbd, x = "lmbd", y = "var_theo", hue = "theta", palette
 ax.legend(title = r'$\theta$')
 ax.set_ylabel(r'$\sigma^2$')
 ax.set_xlabel(r'$\lambda$')
-plt.savefig("/home/aboulin/Documents/stage/var_FMado/missing_data/output/asy_log.pdf")
+plt.savefig("/home/aboulin/Documents/stage/var_FMado/missing_data/output/Student.pdf")

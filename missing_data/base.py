@@ -399,7 +399,7 @@ class Extreme(Bivariate):
         value_3  = math.pow(p_y,-1)*self._Zeta(lmbd) * (self._f(lmbd) * value_31 + lmbd * (1-lmbd)*value_32)
 
         value_42 = quad(lambda s : self._integrand_ev3(s, lmbd), 0.0, 1.0)[0]
-        value_4  = (p_xy / (p_x*p_y))*self._Kappa(lmbd)*self._Zeta(lmbd) * (self._f(lmbd) - lmbd * (1-lmbd) * value_42)
+        value_4  = (p_xy / (p_x*p_y))*self._Kappa(lmbd)*self._Zeta(lmbd) * (-self._f(lmbd) + lmbd * (1-lmbd) * value_42)
 
         sigma_3  = value_1 - 2 * value_2 - 2 * value_3 + 2 * value_4
 
@@ -433,6 +433,7 @@ class Extreme(Bivariate):
 
         sigma_23 = (math.pow(p_xy,-1) - math.pow(p_y,-1)) * value_1 - (math.pow(p_x,-1) - p_xy / (p_x*p_y)) * value_2 
 
-        value_   = 0.25 * sigma_1 + 0.25 * sigma_2 + sigma_3 + 0.5 * sigma_12 - sigma_13 - sigma_23
+        value_   = math.pow(1-lmbd,2)*0.25 * sigma_1 + math.pow(lmbd,2)*0.25 * sigma_2 + sigma_3 + lmbd*(1-lmbd)*0.5 * sigma_12 - (1-lmbd)*sigma_13 - lmbd*sigma_23
+        #value_   = 0.25 * sigma_1 + 0.25 * sigma_2 + sigma_3 + 0.5 * sigma_12 - sigma_13 - sigma_23
         
         return value_
