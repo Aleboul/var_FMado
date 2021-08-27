@@ -370,7 +370,7 @@ class Extreme(Bivariate):
         value_ = 0.5*(lmbd / (1+lmbd) + (1-lmbd)/(1+1-lmbd)) - (lmbd*(1-lmbd)) / (self._A(lmbd) + lmbd*(1-lmbd))
         return value_
 
-    def var_FMado(self, lmbd, p_xy, p_x, p_y):
+    def var_FMado(self, lmbd, p_xy, p_x, p_y, corr = True):
         """
             Compute asymptotic variance of lambda-FMadogram using the specific form for
             bivariate extreme value copula.
@@ -433,7 +433,9 @@ class Extreme(Bivariate):
 
         sigma_23 = (math.pow(p_xy,-1) - math.pow(p_y,-1)) * value_1 - (math.pow(p_x,-1) - p_xy / (p_x*p_y)) * value_2 
 
-        value_   = math.pow(1-lmbd,2)*0.25 * sigma_1 + math.pow(lmbd,2)*0.25 * sigma_2 + sigma_3 + lmbd*(1-lmbd)*0.5 * sigma_12 - (1-lmbd)*sigma_13 - lmbd*sigma_23
-        #value_   = 0.25 * sigma_1 + 0.25 * sigma_2 + sigma_3 + 0.5 * sigma_12 - sigma_13 - sigma_23
+        if corr :
+            value_   = math.pow(1-lmbd,2)*0.25 * sigma_1 + math.pow(lmbd,2)*0.25 * sigma_2 + sigma_3 + lmbd*(1-lmbd)*0.5 * sigma_12 - (1-lmbd)*sigma_13 - lmbd*sigma_23
+        else :
+            value_   = 0.25 * sigma_1 + 0.25 * sigma_2 + sigma_3 + 0.5 * sigma_12 - sigma_13 - sigma_23
         
         return value_
