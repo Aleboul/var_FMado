@@ -5,10 +5,6 @@ from var_FMado.bivariate.base import Bivariate, CopulaTypes, Extreme
 from scipy.stats import norm
 from scipy.stats import t
 
-def gauss(x):
-
-    return (1/math.pow(2*math.pi,1/2)) * math.exp(-math.pow(x,2)/2)
-
 class Hussler_Reiss(Extreme):
     """Class for Hussler_Reiss copula model"""
 
