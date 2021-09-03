@@ -129,7 +129,7 @@ class Monte_Carlo(object):
         
     def huber_contamination(self, inv_cdf_s, inv_cdf_o, show_index = False):
         """
-            Simulate a contaminatio à la Huber.
+            Simulate a contamination à la Huber.
 
             Inputs
             ------
@@ -160,6 +160,19 @@ class Monte_Carlo(object):
             return X, mask
     
     def adversarial_contamination(self, inv_cdf_s, inv_cdf_o, show_index = False):
+        """
+            Simulate adversarial contamination, the criteria chosen is data are close to zero
+            
+            Inputs
+            ------
+            inv_cdf_s : inverse cumulative distribution function of the sane data
+            inv_cdf_o : inverse cumulative distribution function of the contaminated data
+
+            Outputs
+            -------
+            X (array) : array of dimension N x 2
+            index : index of contaminated / sane data (for plot only)
+        """
 
         N = np.max(self.n_sample)
         nb_contaminated = np.int(N * (0.5-self.delta))
