@@ -1,4 +1,5 @@
 import extreme_value_copula
+import archimedean
 import monte_carlo
 import numpy as np
 import pandas as pd
@@ -8,24 +9,58 @@ plt.style.use('seaborn-whitegrid')
 from matplotlib import cm
 from scipy.stats import norm
 from scipy.stats import expon
+import math
 
-n_sample = [10000]
-theta = 2.0
-psi1 = 1.0
+def sample_outliers(n):
+    x = np.random.uniform(low = -3.0, high = -2.0, size = n)
+    y = np.random.uniform(low = 2.0, high = 3.0, size = n)
+
+    sample = np.array([x,y]).T
+
+    return sample
+
+#def sample_outliers(n):
+#    x = np.random.uniform(low = 2.0, high = 3.0, size = n)
+#    y = np.random.uniform(low = -3.0, high = -2.0, size = n)
+#
+#    sample = np.array([x,y]).T
+#
+#    return sample
+
+n = 100
+n_sample = [1000]
+n_iter = 100
+theta = 5/2
+psi1 = 0.1
 psi2 = 1.0
 copula_sane = extreme_value_copula.Asy_log(random_seed = 42, theta = theta, psi1= psi1, psi2= psi2)
-copula_contaminated = extreme_value_copula.Asy_neg_log(random_seed = 42, theta = 1.0, psi1 = 0.1, psi2 = 1.0)
 
-Monte = monte_carlo.Monte_Carlo(n_sample= n_sample, copula_sane= copula_sane, copula_contaminated = copula_contaminated, delta = 0.45)
+delta_ = np.linspace(0.45,0.5, num = n)
+q_05, q_95, q_50 = np.zeros(n), np.zeros(n), np.zeros(n)
 
-sample, index = Monte.adversarial_contamination(inv_cdf_s= norm.ppf, inv_cdf_o=norm.ppf, show_index= True)
+q_05_MoN, q_95_MoN, q_50_MoN = np.zeros(n), np.zeros(n), np.zeros(n)
+for i, delta in enumerate(delta_):
+    
+    K = math.ceil((0.5 - delta) * np.max(n_sample) + 1)
+    Monte = monte_carlo.Monte_Carlo(n_iter = n_iter, n_sample= n_sample, copula_sane= copula_sane, sample_outliers= sample_outliers,delta = delta, K = K)
+    df_FMado = Monte.simu(inv_cdf_s= norm.ppf, contamination= "Adversarial")
 
-print(sample, index)
+    q_05[i], q_95[i], q_50[i] = np.power(df_FMado['scaled'], 2).quantile(0.05), np.power(df_FMado['scaled'], 2).quantile(0.95), np.power(df_FMado['scaled'], 2).quantile(0.5)
+    q_05_MoN[i], q_95_MoN[i], q_50_MoN[i] = np.power(df_FMado['scaled_MoN'], 2).quantile(0.05), np.power(df_FMado['scaled_MoN'], 2).quantile(0.95), np.power(df_FMado['scaled_MoN'], 2).quantile(0.5)
+
+output = np.c_[q_05,q_50,q_95,q_05_MoN,q_50_MoN,q_95_MoN, delta_]
+quantiles = pd.DataFrame(output)
+quantiles.columns = ['q_05', 'q_50', "q_95", "q_05_MoN", "q_50_MoN", "q_95_MoN", "delta"]
+print(quantiles)
 
 fig, ax = plt.subplots()
-ax.plot(sample[index,0], sample[index,1], '.',markersize = 1, alpha = 0.75, color = 'lightcoral')
-ax.plot(sample[~index,0], sample[~index,1], '.',markersize = 1, alpha = 0.5, color = 'lightblue')
-ax.set_title(r'Adversarial contamination $\delta = 0.45$')
-plt.savefig("/home/aboulin/Documents/stage/var_FMado/robust/output/test.pdf")
+ax.plot(quantiles.delta,quantiles.q_50, label = r"$\hat{\nu}$")
+ax.fill_between(quantiles.delta, quantiles.q_05, quantiles.q_95, alpha =0.3)
 
-print(len(sample[index,:]))
+ax.plot(quantiles.delta,quantiles.q_50_MoN, label = r'$\hat{\nu}_{MoN}$')
+ax.fill_between(quantiles.delta, quantiles.q_05_MoN, quantiles.q_95_MoN, alpha =0.3)
+
+ax.set_ylabel(r'$(\hat{\nu} - \nu)^2$')
+ax.set_xlabel(r'$\delta$')
+ax.legend(loc = 'best')
+plt.savefig("/home/aboulin/Documents/stage/var_FMado/robust/output/brouillon.pdf")
