@@ -8,7 +8,7 @@ class Monte_Carlo(object):
         Inputs
         ------
             copula_sane : law of the bivariate sane random vector
-            copula_outlier : law of the bivariate outlier random vector
+            sample_outliers : law of the bivariate outlier random vector
             n_iter (int): number of Monte Carlo simulation
             n_sample (list of int or [int]): multiple length of sample
             lmbd (float) : parameter for the lambda-FMadogram
@@ -34,7 +34,7 @@ class Monte_Carlo(object):
     copula = None
     delta_interval = [0,0.5]
 
-    def __init__(self, n_iter = None, n_sample = [], lmbd = 0.5, random_seed = None, copula_sane = None, copula_contaminated = None, K = None, delta = None):
+    def __init__(self, n_iter = None, n_sample = [], lmbd = 0.5, random_seed = None, copula_sane = None, sample_outliers = None, K = None, delta = None):
         """
             Initialize Monte_Carlo object
         """
@@ -42,7 +42,7 @@ class Monte_Carlo(object):
         self.n_sample = n_sample
         self.lmbd = lmbd
         self.copula_sane = copula_sane
-        self.copula_contaminated = copula_contaminated
+        self.sample_outliers = sample_outliers
         self.K = K
         self.delta = delta
 
@@ -101,7 +101,7 @@ class Monte_Carlo(object):
             X_vec = np.array(X[:,p])
             Femp = self._ecdf(X_vec)
             V[:,p] = Femp
-        Fmado = np.linalg.norm(V[:,0] - V[:,1]) / (2 * Tnb)
+        Fmado = np.linalg.norm(V[:,0] - V[:,1], ord = 1) / (2 * Tnb)
 
         return Fmado
 
@@ -118,23 +118,23 @@ class Monte_Carlo(object):
             -------
             \hat{nu}_{MoN}
         """
-        sample_ = np.random.choice(X, len(X))
+        sample_ = X
+        np.random.shuffle(sample_)
         n = len(sample_)
-        if n % K != 0:
+        if n % self.K != 0:
             N = (n//self.K) * self.K
             sample_ = sample_[0:N]
         sample_ = np.split(sample_, self.K)
-        F_MoN = np.median([_fmado(sample_[k]) for k in range(0,K)], axis = 0)
+        F_MoN = np.median([self._fmado(sample_[k]) for k in range(0,self.K)], axis = 0)
         return F_MoN
         
-    def huber_contamination(self, inv_cdf_s, inv_cdf_o, show_index = False):
+    def huber_contamination(self, inv_cdf_s, show_index = False):
         """
             Simulate a contamination à la Huber.
 
             Inputs
             ------
             inv_cdf_s : inverse cumulative distribution function of the sane data
-            inv_cdf_o : inverse cumulative distribution function of the contaminated data
 
             Outputs
             -------
@@ -152,21 +152,20 @@ class Monte_Carlo(object):
         self.copula_sane.n_sample = N_
         X[~mask,:] = self.copula_sane.sample(inv_cdf_s)
         N_ = np.sum(mask) # number of contaminated observations
-        self.copula_contaminated.n_sample = N_
-        X[mask,:] = self.copula_contaminated.sample(inv_cdf_o)
+        #self.copula_contaminated.n_sample = N_
+        X[mask,:] = self.sample_outliers(N_)
         if show_index == False:
             return X
         else :
             return X, mask
     
-    def adversarial_contamination(self, inv_cdf_s, inv_cdf_o, show_index = False):
+    def adversarial_contamination(self, inv_cdf_s, show_index = False):
         """
             Simulate adversarial contamination, the criteria chosen is data are close to zero
             
             Inputs
             ------
             inv_cdf_s : inverse cumulative distribution function of the sane data
-            inv_cdf_o : inverse cumulative distribution function of the contaminated data
 
             Outputs
             -------
@@ -178,12 +177,12 @@ class Monte_Carlo(object):
         nb_contaminated = np.int(N * (0.5-self.delta))
         X = np.zeros([N,2])
         self.copula_sane.n_sample = N
-        self.copula_contaminated.n_sample = nb_contaminated
+        #self.copula_contaminated.n_sample = nb_contaminated
 
         X = self.copula_sane.sample(inv_cdf_s)
         index = np.argsort(np.linalg.norm(X-np.array([0,0]), axis = 1))
         X = X[index]
-        X[0:nb_contaminated] = self.copula_contaminated.sample(inv_cdf_o)
+        X[0:nb_contaminated] = self.sample_outliers(nb_contaminated)
         mask = np.zeros(N, dtype = bool)
         mask[0:nb_contaminated] = True 
         if show_index == False:
@@ -191,25 +190,31 @@ class Monte_Carlo(object):
         else :
             return X, mask
     
-    def simu(self, inv_cdf):
+    def simu(self, inv_cdf_s, contamination = {"Huber", "Adversarial"}):
         """
             Perform Monte Carlo simulation
         """
 
         output = []
 
-        for k in range(self.n_iter):
+        for k in tqdm(range(self.n_iter)):
             FMado_store = np.zeros(len(self.n_sample))
-            obs_all = self.copula.sample(inv_cdf)
+            FMado_MoN_store = np.zeros(len(self.n_sample))
+            if contamination == "Huber" :
+                obs_all = self.huber_contamination(inv_cdf_s= inv_cdf_s)
+            if contamination == "Adversarial":
+                obs_all = self.adversarial_contamination(inv_cdf_s= inv_cdf_s)
             for i in range(0, len(self.n_sample)):
                 obs = obs_all[:self.n_sample[i]]
-                FMado = self._fmado(obs)
-                FMado_store[i] = FMado[0,1]
-        
-            output_cbind = np.c_[FMado_store, self.n_sample, np.arange(len(self.n_sample))]
+                FMado_store[i] = self._fmado(obs)
+                FMado_MoN_store[i] = self._fmado_MoN(obs)
+
+            output_cbind = np.c_[FMado_store, FMado_MoN_store, self.n_sample, np.arange(len(self.n_sample))]
             output.append(output_cbind)
+
         df_FMado = pd.DataFrame(np.concatenate(output))
-        df_FMado.columns = ['FMado', "n", "gp"]
-        df_FMado['scaled'] = (df_FMado.FMado - df_FMado.groupby('n')['FMado'].transform('mean')) * np.sqrt(df_FMado.n)
+        df_FMado.columns = ['FMado', 'FMado_MoN', "n", "gp"]
+        df_FMado['scaled'] = (df_FMado.FMado - self.copula_sane.true_FMado())
+        df_FMado['scaled_MoN'] = (df_FMado.FMado_MoN - self.copula_sane.true_FMado())
         
         return(df_FMado)

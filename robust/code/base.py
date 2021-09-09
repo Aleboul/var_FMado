@@ -361,8 +361,8 @@ class Extreme(Bivariate):
         value_ = self._A(s)+(1-s)*(self._A(lmbd)/(1-lmbd) - (1-lmbd)-1) + s*(self._A(lmbd)/lmbd - lmbd - 1) + 1
         return math.pow(value_, -2)
 
-    def true_FMado(self, lmbd):
-        value_ = 0.5*(lmbd / (1+lmbd) + (1-lmbd)/(1+1-lmbd)) - (lmbd*(1-lmbd)) / (self._A(lmbd) + lmbd*(1-lmbd))
+    def true_FMado(self):
+        value_ = 0.5 - 1/(2*self._A(0.5)+1)
         return value_
 
     def var_FMado(self, lmbd):
