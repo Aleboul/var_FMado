@@ -6,7 +6,7 @@
     ------
     n (int) : grid of the lambda-axis
     theta (float) : parameter of the t-EV copula
-    nmax : block maxima's length
+    nmax : sample's length
 """
 import numpy as np
 import pandas as pd
