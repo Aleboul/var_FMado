@@ -1,6 +1,19 @@
-import extreme_value_copula
-import archimedean
-import monte_carlo
+"""
+    Comparaison entre le FMadogramme et le MoN-FMadogramme
+    
+    Inputs
+    ------
+    n : delta's grid (proportion of outliers)
+    n_sample : sample's length
+    n_iter : number of estimator taken to compute the biais
+    theta, psi1, psi2 = copula's parameters
+    copula_sane : sane data's law
+    sample_outliers : design of outliers
+"""
+
+import var_FMado.reproducevarFMado.missingdata.src.archimedean
+import var_FMado.reproducevarFMado.missingdata.src.extreme_value_copula
+import var_FMado.reproducevarFMado.missingdata.src.monte_carlo
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
