@@ -1,3 +1,17 @@
+"""
+    Produit un échantillon de maximum par bloc issu d'une copule de Student.
+    Estime un lambda-FMadogramme pour plusieur valeurs de lambda. Calcule la
+    variance sur plusieurs échantillons.
+
+    Inputs
+    ------
+    M (int): number of iteration
+    n (c(int)): number of samples
+    nmax_ (c(int)) : length of sample for which the maximum is taken
+    theta ([float]), psi1 (floatt), psi2 (float) : parameters of the copula
+    p : array of missing's probabilities
+"""
+
 library(VineCopula)
 library(doRNG)
 library(dplyr)
