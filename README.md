@@ -1,7 +1,4 @@
 # var_FMado
-Compute numerically the variance of a FMadogram for a given copula.
-Make simulation.
+Python module which compute numerically the asymptotic variance of the l-FMadogram with missing data. Perform Monte Carlo simulation to asses in finite-sample setting the theoretical results.
 
-Provide some elements with missing data.
-
-All figures available can be reproduce with files in reproducevarFMado.
+The reproduce folder contains codes to reproduce the figures of the report.
