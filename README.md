@@ -4,4 +4,4 @@ Make simulation.
 
 Provide some elements with missing data.
 
-All figures in the complete data setting are available on the bivariate file.
+All figures available can be reproduce with files in reproducevarFMado.
