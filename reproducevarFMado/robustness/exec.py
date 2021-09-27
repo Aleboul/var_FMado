@@ -1,3 +1,16 @@
+"""
+    Mesure la performance entre le FMadogramme et le MoN-FMadogramme
+    
+    Inputs
+    ------
+    n : grid's length of delta (proportion of outliers)
+    n_sample : sample's length
+    n_iter : number of estimator used for computing the biais
+    theta, psi1, psi2 : copula's parameters
+    copula_sane : copule of sane observations
+    sample_outliers : design of the outliers
+"""
+
 import extreme_value_copula
 import archimedean
 import monte_carlo
