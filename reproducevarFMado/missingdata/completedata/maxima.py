@@ -9,10 +9,11 @@
     nmax : sample's length
 """
 
+import var_FMado.reproducevarFMado.missingdata.src.archimedean
+import var_FMado.reproducevarFMado.missingdata.src.extreme_value_copula
+import var_FMado.reproducevarFMado.missingdata.src.monte_carlo
 import numpy as np
 import pandas as pd
-import monte_carlo
-import extreme_value_copula
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
