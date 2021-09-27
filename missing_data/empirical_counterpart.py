@@ -25,7 +25,7 @@ from matplotlib import cm
 from scipy.stats import norm
 
 n = 1000
-n_iter = 100
+n_iter = 500
 n_sample = [512]
 theta = [10]
 psi1 = 0.5
