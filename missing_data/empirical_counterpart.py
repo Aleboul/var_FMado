@@ -2,6 +2,15 @@
     produit deux estimations du l-FMadogramme (hybride + corrigé), calcule la variance
     de l'erreur normalisée sur plusieurs réalisations. Affiche les valeurs théoriques
     de deux contreparties.
+    
+    Inputs
+    ------
+    n (int): grid's length of the lambda-axis
+    n_iter (int): number of samples
+    n_sample ([int]) : length of samples
+    theta ([float]), psi1 (floatt), psi2 (float) : parameters of the copula
+    p : array of missing's probabilities
+
 """
 
 import archimedean
