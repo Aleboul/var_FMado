@@ -25,7 +25,6 @@ class CopulaTypes(Enum):
     NELSEN_12 = 12
     NELSEN_13 = 13
     NELSEN_14 = 14
-    NELSEN_15 = 15
     NELSEN_16 = 16
     NELSEN_22 = 22
     HUSSLER_REISS = 23
@@ -175,13 +174,14 @@ class Archimedean(Bivariate):
         Epsilon = 1e-12
         for i in range(0,self.n_sample):
             v = X[i]
-            #def func(x):
-            #    value_ = ( x - self._generator(x) / self._generator_dot(x)) - v[1]
-            #    return(value_)
             def func(x):
-                value_ = np.abs((x - self._generator(x) / self._generator_dot(x)) - v[1])
-                return value_
-            sol = minimize_scalar(func, bounds = (0.0,1.0), method = 'bounded').x
+                value_ = ( x - self._generator(x) / self._generator_dot(x)) - v[1]
+                return(value_)
+            #def func(x):
+            #    value_ = np.abs((x - self._generator(x) / self._generator_dot(x)) - v[1])
+            #    return value_
+            #sol = minimize_scalar(func, bounds = (0.0,1.0), method = 'bounded').x
+            sol = brentq(func, Epsilon,1-Epsilon)
             u = [self._generator_inv(v[0] * self._generator(sol)) , self._generator_inv((1-v[0])*self._generator(sol))]
             output[i,:] = u
         return output

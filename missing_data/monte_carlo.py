@@ -12,6 +12,8 @@ class Monte_Carlo(object):
 			                   lmbd (float) : value of lambda	
 			 random_seed (Union[int, None]) : seed for the random generator
 						p (list of [float]) : array of probabilities of presence
+							copula (object) : law of the vector of the uniform margin
+								copula_miss : dependence modeling of the couple (I,J)
 		Attributes
 		----------
 			          n_sample (list[int]) : several lengths used for estimation
@@ -30,8 +32,9 @@ class Monte_Carlo(object):
 	lmbd_interval = None
 	random_seed = None
 	copula = None
+	copula_miss = None
 	
-	def __init__(self, n_iter = None, n_sample = [], lmbd = 0.5, random_seed = None, copula = None, p = [1.0,1.0]):
+	def __init__(self, n_iter = None, n_sample = [], lmbd = 0.5, random_seed = None, copula = None, p = [1.0,1.0], copula_miss = None):
 		"""
 			Initialize Monte_Carlo object
 		"""
@@ -41,6 +44,7 @@ class Monte_Carlo(object):
 		self.lmbd = lmbd
 		self.copula = copula
 		self.p = p
+		self.copula_miss = copula_miss
 		
 	def check_lmbd(self):
 		"""
@@ -71,32 +75,6 @@ class Monte_Carlo(object):
 			ecdf[i] = (1.0 / np.sum(miss)) * np.sum((data <= data[i]) * miss)
 		return ecdf
 		
-	def _dist(self, X, miss, corr):
-		"""	
-			Compute matrix of F-Madogram using the empirical cumulative distribution function
-			
-			Inputs
-			------
-			   X : a matrix composed of uniform ecdf
-			lmbd : a parameter between 0 and 1
-			miss : array indicates missing
-			corr : if true, return corrected version
-			
-			Outputs
-			-------
-			A matrix with quantity equals to 0 if i=j (diagonal) and equals to sum_t=1^T |F(X_t)^{\lmbd} - G(Y_t)^{1-\lmbd}| if i \neq j
-		"""
-		
-		ncols = X.shape[1]
-		nrows = X.shape[0]
-		F_x = np.squeeze(X[0,:])
-		G_y = np.squeeze(X[1,:])
-		if corr :
-			dist = np.linalg.norm((np.power(F_x,self.lmbd) - np.power(G_y,1-self.lmbd)) * (miss[0] * miss[1]), ord = 1) - self.lmbd * np.sum((1-np.power(F_x,self.lmbd))* (miss[0] * miss[1])) - (1-self.lmbd) * np.sum((1-np.power(G_y,1-self.lmbd))* (miss[0] * miss[1]))
-		else :
-			dist = np.linalg.norm((np.power(F_x,self.lmbd) - np.power(G_y,1-self.lmbd)) * (miss[0] * miss[1]), ord = 1)
-		return dist
-		
 	def _fmado(self, X, miss, corr) :
 		"""
 			This function computes the lambda-FMadogram
@@ -120,12 +98,32 @@ class Monte_Carlo(object):
 			X_vec = np.array(X[:,p])
 			Femp = self._ecdf(X_vec, miss[p])
 			V[:,p] = Femp
-		if corr :
-			FMado = self._dist(np.transpose(V), miss, corr) / (2 * np.sum(miss[0] * miss[1])) + 0.5 * (1-self.lmbd + np.power(self.lmbd,2)) / ((1+self.lmbd) / (1+1-self.lmbd))
+		if corr == True:
+
+			FMado = (np.linalg.norm((np.power(V[:,0], self.lmbd) - np.power(V[:,1], 1-self.lmbd))* (miss[0] * miss[1]), ord = 1) - (self.lmbd) * np.sum((1-np.power(V[:,0],self.lmbd))* (miss[0] * miss[1])) - (1-self.lmbd) * np.sum((1-np.power(V[:,1],1-self.lmbd))* (miss[0] * miss[1]))) / (2 * np.sum(miss[0] * miss[1])) + 0.5 * (1-self.lmbd + np.power(self.lmbd,2)) / ((1+self.lmbd) / (1+1-self.lmbd))
 		else :
-			FMado = self._dist(np.transpose(V), miss, corr) / (2 * np.sum(miss[0] * miss[1]))
+			FMado = np.linalg.norm((np.power(V[:,0],self.lmbd) - np.power(V[:,1], 1-self.lmbd))* (miss[0] * miss[1]), ord = 1) / (2 * np.sum(miss[0] * miss[1]))
 
 		return FMado
+
+	def _gen_missing(self):
+		"""
+			This function returns an array max(n_sample) \times 2 of binary indicate missing of X or Y.
+			Dependence between (I,J) is given by copula_miss. The idea is the following
+			I \sim Ber(p[0]), J \sim Ber(p[1]) and (I,J) \sim Ber(copula_miss(p[0], p[1])).
+			
+			We simulate it by generating a sample (U,V) of length max(n_sample) from copula_miss.
+
+			Then, X = 1 if U \leq p[0] and Y = 1 if V \leq p[1]. These random variables are indeed Bernoulli.
+			
+			Also \mathbb{P}(X = 1, Y = 1) = \mathbb{P}(U\leq p[0], V \leq p[1]) = C(p[0], p[1])
+		"""
+		if self.copula_miss is None:
+			return np.array([np.random.binomial(1,self.p[0],np.max(self.n_sample)),np.random.binomial(1,self.p[1],self.n_sample)])
+		else :
+			sample_ = self.copula_miss.sample_unimargin()
+			miss_ = np.array([1 * (sample_[:,0] <= self.p[0]), 1*(sample_[:,1] <= self.p[1])])
+			return miss_
 		
 	def simu(self, inv_cdf, corr = {False, True, "Both"}):
 		"""
@@ -139,7 +137,7 @@ class Monte_Carlo(object):
 			if corr == "Both":
 				FMado_corr_store = np.zeros(len(self.n_sample))
 			obs_all = self.copula.sample(inv_cdf)
-			miss_all = [np.random.binomial(1,self.p[0],np.max(self.n_sample)),np.random.binomial(1,self.p[1],self.n_sample)]
+			miss_all = self._gen_missing()
 			for i in range(0,len(self.n_sample)):
 				obs = obs_all[:self.n_sample[i]]
 				miss = [miss_all[0][:self.n_sample[i]],miss_all[1][:self.n_sample[i]]]
