@@ -8,7 +8,7 @@
     n (int): grid's length of the lambda-axis
     n_iter (int): number of samples
     n_sample ([int]) : length of samples
-    theta ([float]), psi1 (floatt), psi2 (float) : parameters of the copula
+    theta ([float]), psi1 (float), psi2 (float) : parameters of the copula
     p : array of missing's probabilities
 """
 
@@ -23,11 +23,11 @@ plt.style.use('seaborn-whitegrid')
 from matplotlib import cm
 from scipy.stats import norm
 
-n = 1000
+n = 200
 n_iter = 100
 n_sample = [256]
 theta = [1.33]
-psi1 = -4/3
+psi1 = -1/3
 psi2 = 1.0
 random_seed = 42
 p = [1.0,1.0]
