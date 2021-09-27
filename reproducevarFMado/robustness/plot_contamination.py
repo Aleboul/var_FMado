@@ -1,5 +1,12 @@
 """
     Représente les types de contaminations.
+    
+    Inputs
+    ------
+    n_sample ([int]) : sample's length
+    theta, psi1, psi2 : copula's parameter
+    copula_sane : law of the sane observations
+    sample_outliers : design of the outliers
 """
 
 from os import spawnlp
@@ -14,13 +21,6 @@ plt.style.use('seaborn-whitegrid')
 from matplotlib import cm
 from scipy.stats import norm
 from scipy.stats import expon
-
-#def inv_cdf_o(u):
-#    return norm.ppf(u, 2, np.sqrt(0.5))
-#
-#def sample_outliers(n):
-#    copula_contaminated = extreme_value_copula.Asy_log(n_sample = n,random_seed = 42, theta = 1.0, psi1 = 1.0, psi2 = 1.0)
-#    return copula_contaminated.sample(inv_cdf= inv_cdf_o)
 
 def sample_outliers(n):
     x = np.random.uniform(low = 0.95, high = 1.0, size = n)
@@ -38,20 +38,9 @@ def sample_outliers(n):
 
     return sample
 
-#def sample_outliers(n):
-#    length = np.random.uniform(3.5,4.0,n)
-#    angle = np.pi * np.random.uniform(0,2,n)
-#
-#    x = length * np.cos(angle)
-#    y = length * np.sin(angle)
-#
-#    sample = np.array([x,y]).T
-#
-#    return sample
-
 n_sample = [10000]
-theta = 1.5
-psi1 = 1.0
+theta = 2.5
+psi1 = 0.5
 psi2 = 1.0
 copula_sane = extreme_value_copula.Asy_neg_log(theta = theta, psi1= psi1, psi2= psi2)
 
