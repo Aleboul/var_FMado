@@ -1,3 +1,7 @@
+"""
+    Calcule la moyenne mobile avec une fenêtre de 10 données sur les variances empiriques.
+"""
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
