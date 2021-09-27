@@ -2,8 +2,8 @@
     Code permettant les représentations 3D de la variance asymptotique du processus.
 """
 
-import extreme_value_copula
-import monte_carlo
+import var_FMado.reproducevarFMado.missingdata.src.extreme_value_copula
+import var_FMado.reproducevarFMado.missingdata.src.monte_carlo
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
