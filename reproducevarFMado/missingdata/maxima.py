@@ -1,6 +1,12 @@
 """
     Produit l'expérience lorsque l'on prend le maximum de variables aléatoires suivant
     une copule de student.
+    
+    Inputs
+    ------
+    n (int) : grid of the lambda-axis
+    theta (float) : parameter of the t-EV copula
+    nmax : block maxima's length
 """
 import numpy as np
 import pandas as pd
@@ -13,6 +19,7 @@ plt.style.use('seaborn-whitegrid')
 from matplotlib import cm
 n = 100
 theta = 0.8
+nmax = 512
 
 with open("output/max_student_M500_n512.txt", "rb") as data:
     b = pickle.load(data)
@@ -28,7 +35,7 @@ for lmbd in x:
 theorical = pd.DataFrame()
 theorical['var_theo'] = value
 theorical['lambda'] = x
-theorical['nmax'] = 512
+theorical['nmax'] = nmax
 
 print(var_lmbd)
 print(theorical)
