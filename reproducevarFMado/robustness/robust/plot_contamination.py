@@ -1,5 +1,17 @@
 """
     Représente les types de contaminations.
+
+    Comparaison entre le FMadogramme et le MoN-FMadogramme
+    
+    Inputs
+    ------
+
+    n_sample : sample's length
+    n_iter : number of estimator taken to compute the biais
+    theta, psi1, psi2 = copula's parameters
+    copula_sane : sane data's law
+    sample_outliers : design of outliers
+
 """
 
 import var_FMado.reproducevarFMado.missingdata.src.archimedean
@@ -13,13 +25,6 @@ plt.style.use('seaborn-whitegrid')
 from matplotlib import cm
 from scipy.stats import norm
 from scipy.stats import expon
-
-#def inv_cdf_o(u):
-#    return norm.ppf(u, 2, np.sqrt(0.5))
-#
-#def sample_outliers(n):
-#    copula_contaminated = extreme_value_copula.Asy_log(n_sample = n,random_seed = 42, theta = 1.0, psi1 = 1.0, psi2 = 1.0)
-#    return copula_contaminated.sample(inv_cdf= inv_cdf_o)
 
 def sample_outliers(n):
     x = np.random.uniform(low = 0.95, high = 1.0, size = n)
@@ -36,17 +41,6 @@ def sample_outliers(n):
     sample = np.array([x,y]).T
 
     return sample
-
-#def sample_outliers(n):
-#    length = np.random.uniform(3.5,4.0,n)
-#    angle = np.pi * np.random.uniform(0,2,n)
-#
-#    x = length * np.cos(angle)
-#    y = length * np.sin(angle)
-#
-#    sample = np.array([x,y]).T
-#
-#    return sample
 
 n_sample = [10000]
 theta = 1.5
