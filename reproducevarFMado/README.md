@@ -17,6 +17,4 @@ Section 2.2.4 : maxima.py and maxima.R in completedata files.
 
 Section 2.3 : complete.py in missing files.
 
-robustness files
-
-Section 2.4 : contain all robust files.
+robustness files for Section 2.4.
