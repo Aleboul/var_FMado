@@ -1,5 +1,12 @@
 """
     Code permettant les représentations 3D de la variance asymptotique du processus.
+    
+    Inputs
+    ------
+    
+    THETA : mesh grid for y-axis
+    LMBD : mesh grid for x-axis
+    psi1, psi2 : copula parameters
 """
 
 import var_FMado.reproducevarFMado.missingdata.src.extreme_value_copula
