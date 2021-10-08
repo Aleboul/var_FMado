@@ -1,4 +1,4 @@
-These scripts produce the figure for the manuscript
+These scripts produce the figure for the manuscript :
 
 "Non parametric estimation of the Madogram in missing data and outliers setting."
 
