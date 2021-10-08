@@ -1,7 +1,7 @@
 """
-    Ce code produit des simulations de Monte Carlo pour un model sélectionné.
-    Il réalise pour une grille lambda choisi une contrepartie empirique et 
-    ajoute sa valeur théorique dessus.
+    Ce code produit des simulations de Monte Carlo pour un modèle sélectionné.
+    Il calcul pour une grille lambda choisie la contrepartie empirique et 
+    ajoute sa valeur théorique.
 
     Inputs
     ------
