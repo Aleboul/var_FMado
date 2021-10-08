@@ -6,7 +6,7 @@ The instructions below describe the different files.
 
 ######
 
-In each files, a src files is available, it contains all the raw code for simulating copula.
+In each files, a src file is available, it contains all the raw code for simulating copula.
 
 missingdata files
 
