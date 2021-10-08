@@ -1,5 +1,5 @@
 """
-    produit deux estimations du l-FMadogramme (hybride + corrigé), calcule la variance
+    produit deux estimations du lambda-FMadogramme (hybride + corrigé), calcule la variance
     de l'erreur normalisée sur plusieurs réalisations. Affiche les valeurs théoriques
     des deux contreparties empiriques.
     
