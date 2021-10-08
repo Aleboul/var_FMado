@@ -11,9 +11,9 @@
     sample_outliers : design of outliers
 """
 
-import var_FMado.reproducevarFMado.robust.src.archimedean
-import var_FMado.reproducevarFMado.robust.src.extreme_value_copula
-import var_FMado.reproducevarFMado.robust.src.monte_carlo
+import var_FMado.reproducevarFMado.robustness.robust.src.archimedean
+import var_FMado.reproducevarFMado.robustness.robust.src.extreme_value_copula
+import var_FMado.reproducevarFMado.robustness.robust.src.monte_carlo
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
