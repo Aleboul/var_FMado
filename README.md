@@ -1,5 +1,5 @@
 # var_FMado
-Python module which compute numerically the asymptotic variance of the lambda-FMadogram with missing data. Perform Monte Carlo simulation to asses in finite-sample setting the theoretical results. It also gives tools to simulate some extreme value copulas.
+Python module which compute numerically the asymptotic variance of the lambda-FMadogram with missing data. Perform Monte Carlo simulation to asses in finite-sample setting the theoretical results. It also gives tools to simulate some extreme value copulas (and also some Archimedean copulas).
 
 The reproduce folder contains codes to reproduce the figures of the report.
 
